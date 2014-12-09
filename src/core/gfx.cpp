@@ -58,7 +58,7 @@ Vector3D seaGray(0.243, 0.27, 0.298);
 Vector3D lGray(0.878, 0.872, 0.867);
 Vector3D warmRed(1.0, 0.498, 0.4);
 Vector3D blue(0.494, 0.807, 0.992);
-// Vector3D lBlue(0.494, 0.807, 0.992);
+Vector3D dBlue(33.0f / 255, 133.0f / 255, 215.0f / 255);
 Vector3D ourWhite( 1, 1, 1 );
 Vector3D ourRed( 1, .5, .5 );
 Vector3D ourBlue( 102.0f/255, 204.0f/255, 1.0f );
@@ -412,6 +412,48 @@ void initBassGfx() {
         bassNoteOutline->active = false;
         g_bassNotesOutlines.push_back(bassNoteOutline);
         Globals::sim->root().addChild(bassNoteOutline);
+        YText *noteLabel = new YText();
+        noteLabel->col = cream;
+        noteLabel->setCenterLocation(Vector3D(-((12 / 2) * 0.75) + (i * 0.75) + (0.75 + 0.075), -2.05, 0.5));
+        switch (i) {
+            case 0:
+                noteLabel->set("C");
+            break;
+            case 1:
+                noteLabel->set("C#");
+            break;
+            case 2:
+                noteLabel->set("D");
+            break;
+            case 3:
+                noteLabel->set("D#");
+            break;
+            case 4:
+                noteLabel->set("E");
+            break;
+            case 5:
+                noteLabel->set("F");
+            break;
+            case 6:
+                noteLabel->set("F#");
+            break;
+            case 7:
+                noteLabel->set("G");
+            break;
+            case 8:
+                noteLabel->set("G#");
+            break;
+            case 9:
+                noteLabel->set("A");
+            break;
+            case 10:
+                noteLabel->set("A#");
+            break;
+            case 11:
+                noteLabel->set("B");
+            break;
+        }
+        Globals::sim->root().addChild(noteLabel);
     }
 }
 
@@ -610,6 +652,7 @@ void keyboardFunc( unsigned char key, int x, int y )
                     Globals::scaleMap[i] = false;
                 // reset triads 
                 Globals::triads.clear();
+                Globals::triadGfx.type = TR_INVALID;
             }
         break;
     }
@@ -697,7 +740,7 @@ void idleFunc( )
     glutPostRedisplay( );
 }
 
-Vector3D g_sliderOffset(Globals::noteIntensity, Globals::noteIntensity, 0.2);
+Vector3D g_sliderOffset(Globals::noteIntensity, Globals::noteIntensity, 0.15);
 
 //-----------------------------------------------------------------------------
 // Name: displayFunc( )
@@ -719,9 +762,9 @@ void displayFunc( )
 
     // metronome
     g_metronome->active = true;
-    if (Globals::beatCounter % (Globals::tSign.beatCount * 4) == 0)
+    if (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit) == 0)
         g_metronome->col = warmRed;
-    else if (Globals::beatCounter % Globals::tSign.beatCount == 0)
+    else if (Globals::beatCounter % Globals::tSign.beatUnit == 0)
         g_metronome->col = blue;
     else 
         g_metronome->active = false;
@@ -730,7 +773,7 @@ void displayFunc( )
     for (int i = 0; i < Globals::nDrumTypes; i++) {
         YCube *currCube = g_drumCubes[0][i];
         if (Globals::drumGfx[i] == 1) {
-            currCube->sca.set(1, 1.5, 1);
+            currCube->sca.set(1, 1.25, 1);
         }
         else
             currCube->sca.set(1, 1, 1);
@@ -738,7 +781,7 @@ void displayFunc( )
 
     // intensity update
     g_sliderOffset.goal = Globals::noteIntensity;
-    g_sliderOffset.interp2(0.2);
+    g_sliderOffset.interp2(0.15);
     g_intensitySliderMarker->loc.set(0 - (3.5 / 2) + (0.35 / 2) + g_sliderOffset.value, 3.5, 0);
 
     // update bass display
@@ -746,10 +789,24 @@ void displayFunc( )
         g_bassNotesOutlines[i]->active = Globals::scaleMap[i];
         if (i == Globals::scaleRoot && Globals::toggleScaleBuild)
             g_bassNotes[i]->col = warmRed;
-        else
+        else {
+            g_bassNotes[i]->sca.set(0.5, 0.2, 0.2);
+            g_bassNotesOutlines[i]->sca.set(0.52, 0.22, 0.2);
             g_bassNotes[i]->col = blue;
-        if (i == Globals::currentBassNote)
+        }
+        // triad highlighter
+        if ((i == Globals::triadGfx.first) || (i == Globals::triadGfx.third) || (i == Globals::triadGfx.fifth)) {
+            g_bassNotes[i]->col = dBlue;
+            g_bassNotes[i]->sca.set(0.55, 0.25, 0.2);
+            g_bassNotesOutlines[i]->sca.set(0.57, 0.27, 0.2);
+        }
+        // current note highlighter
+        if (i == Globals::currentBassNote) {
             g_bassNotes[i]->col = ourPurple;
+            g_bassNotes[i]->sca.set(0.6, 0.3, 0.2);
+            g_bassNotesOutlines[i]->sca.set(0.62, 0.32, 0.2);
+            // bassNote->sca.set(0.5, 0.2, 0.2);
+        }
     }
 
     // cascade simulation

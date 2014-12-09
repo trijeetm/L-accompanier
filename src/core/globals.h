@@ -42,6 +42,7 @@ using namespace std;
 #define TR_INVALID      -1
 #define TR_MAJOR        0
 #define TR_MINOR        1
+#define TR_GFX          -2
 
 struct triad {
     int type;
@@ -164,6 +165,7 @@ public:
     static int scaleRoot;
 
     static vector<triad> triads;
+    static triad triadGfx;
 
     static map<int, bool> currentNotes;
 

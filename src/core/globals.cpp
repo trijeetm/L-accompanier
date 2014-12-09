@@ -49,6 +49,7 @@ int Globals::scalePlayhead = 0;
 std::map<int, bool> Globals::scaleMap;
 int Globals::scaleRoot = -1;
 vector<triad> Globals::triads;
+triad Globals::triadGfx = triad();
 
 map<int, bool> Globals::currentNotes;
 

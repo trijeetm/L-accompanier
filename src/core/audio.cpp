@@ -19,82 +19,14 @@ using namespace std;
 // globals
 YFluidSynth * g_synth;
 // mYEcho * g_echo;
+Vector3D g_intensitySlew(Globals::noteIntensity, Globals::noteIntensity, 0.75);
 
-void dm_playSynths() {
-    // bool noteplayed = false;
-    // int drumNotesPlayed = 0;
-    // // clear notes
-    // for (int i = 0; i < DM_POLYPHONY; i++) {
-    //     if (Globals::pianoGrid[Globals::playhead].notes[i].on) {
-    //         g_synth->allNotesOff(1);
-    //     }
-    //     if (Globals::synthGrid[Globals::playhead].notes[i].on) {
-    //         g_synth->allNotesOff(2);
-    //     }
-    // }
-    // for (int i = 0; i < DM_POLYPHONY; i++) {
-    //     if (Globals::drumGrid[Globals::playhead].notes[i].on) {
-    //         // play midi drums
-    //         g_synth->programChange(0, 69);
-    //         if (i % 4 == 0)
-    //             g_synth->noteOn(0, Globals::drumGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(7, 120));
-    //         else if (i % 2 == 0)
-    //             g_synth->noteOn(0, Globals::drumGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(15, 100));
-    //         else
-    //             g_synth->noteOn(0, Globals::drumGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(15, 75));
-    //         noteplayed = true;
-    //         drumNotesPlayed++;
-    //     }
-    //     if (Globals::pianoGrid[Globals::playhead].notes[i].on) {
-    //         // play midi pianos
-    //         g_synth->programChange(1, 36);
-    //         if (i % 4 == 0) {
-    //             g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(27, 100));
-    //             g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch + 12, XFun::rand2i(27, 100));
-    //             // g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch + 7, XFun::rand2i(27, 100));
-    //         }
-    //         else if (i % 2 == 0) {
-    //             g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(20, 95));
-    //             g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch + 12, XFun::rand2i(20, 95));
-    //             // g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch + 7, XFun::rand2i(20, 95));
-    //         }
-    //         else {
-    //             g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(25, 70));
-    //             g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch + 12, XFun::rand2i(25, 70));
-    //             // g_synth->noteOn(1, Globals::pianoGrid[Globals::playhead].notes[i].pitch + 7, XFun::rand2i(30, 75));
-    //         }
-    //         // noteplayed = true;
-    //         // drumNotesPlayed++;
-    //     }
-    //     if (Globals::synthGrid[Globals::playhead].notes[i].on) {
-    //         // play midi synth chords
-    //         g_synth->programChange(2, 4);
-    //         if (i % 4 == 0) {
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(27, 100));
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch + 12, XFun::rand2i(27, 100));
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch + 7, XFun::rand2i(27, 100));
-    //         }
-    //         else if (i % 2 == 0) {
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(20, 95));
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch + 12, XFun::rand2i(20, 95));
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch + 7, XFun::rand2i(20, 95));
-    //         }
-    //         else {
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch, XFun::rand2i(25, 70));
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch + 12, XFun::rand2i(25, 70));
-    //             g_synth->noteOn(2, Globals::synthGrid[Globals::playhead].notes[i].pitch + 7, XFun::rand2i(30, 75));
-    //         }
-    //         // noteplayed = true;
-    //         // drumNotesPlayed++;
-    //     }
-    // }
-    // Globals::drumGrid[Globals::playhead].totalPatches = drumNotesPlayed;
-    // Globals::pianoGrid[Globals::playhead].totalPatches = drumNotesPlayed;
-    // Globals::synthGrid[Globals::playhead].totalPatches = drumNotesPlayed;
-    // // if (noteplayed)
-    // //     cerr << "•" << "\t";
-    // // else
-    // //     cerr << "x" << "\t";
+int chooseRandomSample(int samples[], int size) {
+    return samples[random() % size];
+}
+
+int randInt(int low, int high) {
+    return low + (random() % (high - low));
 }
 
 void metronome() {
@@ -110,15 +42,12 @@ void metronome() {
         }
 }
 
-int chooseRandomSample(int samples[], int size) {
-    return samples[random() % size];
-}
-
-int randInt(int low, int high) {
-    return low + (random() % (high - low));
-}
-
 void drummer() {
+
+    g_intensitySlew.goal = Globals::noteIntensity;
+    g_intensitySlew.interp2(0.75);
+    cerr << endl << "intensity: " << g_intensitySlew.value << endl;
+
     // bass drum 1 - 35
     // bass drum 2 - 36
     // snare 1 - 38
@@ -133,6 +62,8 @@ void drummer() {
 
     float drumGain = Globals::drumGain;
 
+    float intensityFactor = 0.0625;
+
     // reset g_synth
     g_synth->programChange(C_DRUMMER, 69);
 
@@ -140,7 +71,7 @@ void drummer() {
     for (int i = 0; i < Globals::nDrumTypes; i++)
         Globals::drumGfx[i] = 0;
 
-    if (Globals::noteIntensity >= 0.05) {
+    if (g_intensitySlew.value >= intensityFactor) {
         // bass and hi hat at first beat
         if (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit) == 0) {
             g_synth->noteOn(C_DRUMMER, chooseRandomSample(hiHats, nHiHats - 1), randInt(110, 126) * drumGain);
@@ -150,7 +81,7 @@ void drummer() {
         }
     }
 
-    if (Globals::noteIntensity >= 0.1) {
+    if (g_intensitySlew.value >= intensityFactor * 2) {
         // hi hat at downbeats
         if (Globals::beatCounter % ((Globals::tSign.beatCount * Globals::tSign.beatUnit) / 2) == 0) {
             g_synth->noteOn(C_DRUMMER, chooseRandomSample(hiHats, nHiHats - 1), randInt(85, 100) * drumGain);
@@ -158,7 +89,7 @@ void drummer() {
         }
     }
 
-    if (Globals::noteIntensity >= 0.25) {
+    if (g_intensitySlew.value >= intensityFactor * 4) {
         // hi hats all beats
         if (Globals::beatCounter % Globals::tSign.beatUnit == 0) {
             g_synth->noteOn(C_DRUMMER, chooseRandomSample(hiHats, nHiHats - 1), randInt(80, 90) * drumGain);
@@ -166,7 +97,7 @@ void drummer() {
         }
     }
 
-    if (Globals::noteIntensity >= 0.35) {
+    if (g_intensitySlew.value >= intensityFactor * 8) {
         // bass at downbeats
         if (Globals::beatCounter % ((Globals::tSign.beatCount * Globals::tSign.beatUnit) / 2) == 0) {
             g_synth->noteOn(C_DRUMMER, 35, randInt(85, 100) * drumGain);    
@@ -174,7 +105,7 @@ void drummer() {
         }
     }
 
-    if (Globals::noteIntensity >= 0.5) {
+    if (g_intensitySlew.value >= intensityFactor * 12) {
         // snare and bass2 at some upbeats
         if ( 
             (Globals::beatCounter % Globals::tSign.beatUnit == 0) && 
@@ -192,7 +123,7 @@ void drummer() {
         }
     }
 
-    if (Globals::noteIntensity >= 0.6) {
+    if (g_intensitySlew.value >= intensityFactor * 16) {
         // snare and bass2 at some more upbeats
         if ( 
             (Globals::beatCounter % Globals::tSign.beatUnit == 0) && 
@@ -210,7 +141,7 @@ void drummer() {
         }
     }
 
-    if (Globals::noteIntensity >= 0.65) {
+    if (g_intensitySlew.value >= intensityFactor * 20) {
         // rand hi hat at every second beat event
         if ((Globals::beatCounter % 2) == 0) {
             g_synth->noteOn(C_DRUMMER, chooseRandomSample(hiHats, nHiHats), randInt(50, randInt(80, 95)) * drumGain);
@@ -222,11 +153,12 @@ void drummer() {
         }
     } 
 
-    if (Globals::noteIntensity >= 1.0) {
+    if (g_intensitySlew.value >= intensityFactor * 25) {
         // rand hi hat at every beat event
-        if ((Globals::beatCounter) == 0) {
+        if ((Globals::beatCounter % 1) == 0) {
             g_synth->noteOn(C_DRUMMER, chooseRandomSample(hiHats, nHiHats), randInt(45, randInt(70, 95)) * drumGain);
-            Globals::drumGfx[DM_HIHATS] = 1;
+            // disabled for gfx sanity
+            // Globals::drumGfx[DM_HIHATS] = 1;
         }
     } 
 }
@@ -235,7 +167,7 @@ int g_lastBassNotePlayed = -1;
 triad g_currTriadInUse = triad();
 
 void bassist() {
-    int registerOffset = (12 * randInt(2, 3));
+    int registerOffset = (12 * randInt(2, 4));
     int bassNotes[] = { Globals::scaleRoot, Globals::scaleRoot, Globals::scaleRoot };
     g_synth->programChange(C_BASSIST, 24);
     int currentNoteLowest = -1;
@@ -246,7 +178,7 @@ void bassist() {
             break;
         }
     } 
-    if (currentNoteLowest == -1)
+    if ((currentNoteLowest == -1) || (!Globals::scaleMap[currentNoteLowest]))
         currentNoteLowest = Globals::scaleRoot;
 
     // check for triad membership of lowest current note
@@ -254,6 +186,17 @@ void bassist() {
     for (int i = 0; i < Globals::triads.size(); i++) {
         triad currTriad = Globals::triads[i];
         if (currentNoteLowest == currTriad.first) {
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
             parentTriads.push_back(currTriad);
             parentTriads.push_back(currTriad);
             parentTriads.push_back(currTriad);
@@ -266,37 +209,51 @@ void bassist() {
         if (currentNoteLowest == currTriad.fifth) {
             parentTriads.push_back(currTriad);
             parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
         }
     }
 
     // choose current triad
+    if (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit) == 0) {
+        cerr << "triad: " << endl;
+        if (!parentTriads.empty())
+            g_currTriadInUse = parentTriads[randInt(0, parentTriads.size())];
+        else 
+            g_currTriadInUse = triad(TR_MAJOR, Globals::scaleRoot, Globals::scaleRoot, Globals::scaleRoot);
+        Globals::triadGfx = g_currTriadInUse;
+        Globals::triadGfx.type = TR_GFX;
+        cerr << g_currTriadInUse.type << "\t" << g_currTriadInUse.first << "\t" << g_currTriadInUse.third << "\t" << g_currTriadInUse.fifth << "\t" << endl;
+    }
+
 
     int currentBassNote;
     if (g_currTriadInUse.type == TR_INVALID)
         currentBassNote = Globals::scaleRoot;
     else {
-        int decider = randInt(0, 20);
+        int decider = randInt(0, 30);
         if (decider > 15) 
-            currentBassNote = g_currTriadInUse.fifth;
-        else if (decider > 10) 
-            currentBassNote = g_currTriadInUse.third;
-        else if (decider >= 0) 
             currentBassNote = g_currTriadInUse.first;
+        else if (decider > 5) 
+            currentBassNote = g_currTriadInUse.fifth;
+        else if (decider >= 0) 
+            currentBassNote = g_currTriadInUse.third;
     }
 
     // add register offset 
     currentBassNote += registerOffset;
 
-    if ((g_lastBassNotePlayed != currentBassNote) && (g_lastBassNotePlayed != -1)) {
-        g_synth->noteOff(C_BASSIST, g_lastBassNotePlayed);
-        Globals::currentBassNote = -1;
-    }
     if (Globals::drumGfx[DM_BASS] || Globals::drumGfx[DM_SNARE]) {
+        if ((currentBassNote != g_lastBassNotePlayed) && (g_lastBassNotePlayed != -1)) {
+            cerr << "noteOff" << endl;
+            g_synth->noteOff(C_BASSIST, g_lastBassNotePlayed);
+            Globals::currentBassNote = -1;
+        }
         // cerr << currentNote << endl;
         Globals::currentBassNote = currentBassNote % 12;
-        g_synth->noteOn(C_BASSIST, currentBassNote, randInt(80, 127) * Globals::bassGain);
+        g_synth->noteOn(C_BASSIST, currentBassNote, randInt(105, 127) * Globals::bassGain);
+        g_lastBassNotePlayed = currentBassNote; 
     }
-    g_lastBassNotePlayed = currentBassNote;
 }
 
 vector<int> g_notePlayedHistory;
@@ -305,7 +262,7 @@ void calculateNoteIntensity() {
     // old implementation
     if (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit * 1) == 0) {
         Globals::noteIntensity = Globals::notesPlayed * 1.0 / (Globals::tSign.beatCount * Globals::tSign.beatUnit * 1.0);
-        cerr << endl << Globals::noteIntensity;
+        // cerr << endl << Globals::noteIntensity;
         Globals::notesPlayed = 0;
     } 
     return;
@@ -359,29 +316,41 @@ static void audio_callback(SAMPLE * buffer, unsigned int numFrames, void * userD
     else {
         // calculate triads if it doesn't exist
         if (Globals::triads.empty()) {
+            // cerr << "start build" << endl;
             for (int i = 0; i < Globals::scaleMap.size(); i++) {
                 triad newTriad = triad();
                 if (Globals::scaleMap[i]) {
+                    // cerr << "building triad" << endl;
+
+                    // cerr << "1" << endl;    
                     newTriad.first = i;
 
-                    if (Globals::scaleMap[(i + 4) % 12]) {
-                        newTriad.third = (i + 4) % 12;
+                    // cerr << "2" << endl;    
+                    if (Globals::scaleMap[(i + 4) % Globals::scaleMap.size()]) {
+                        newTriad.third = (i + 4) % Globals::scaleMap.size();
                         newTriad.type = TR_MAJOR;
                     }
-                    else if (Globals::scaleMap[(i + 3) % 12]) {
-                        newTriad.third = (i + 3) % 12;
+                    else if (Globals::scaleMap[(i + 3) % Globals::scaleMap.size()]) {
+                        newTriad.third = (i + 3) % Globals::scaleMap.size();
                         newTriad.type = TR_MINOR;
                     }
                     else 
                         newTriad.type = TR_INVALID;
 
-                    if (Globals::scaleMap[(i + 7) % 12])
-                        newTriad.fifth = (i + 7) % 12;
+                    // cerr << "3" << endl;    
+                    if (Globals::scaleMap[(i + 7) % Globals::scaleMap.size()])
+                        newTriad.fifth = (i + 7) % Globals::scaleMap.size();
                     else 
                         newTriad.type = TR_INVALID;
+
+                    // cerr << newTriad.type << "\t" << newTriad.first << "\t" << newTriad.third << "\t" << newTriad.fifth << "\t" << endl;
                 }
                 if (newTriad.type != TR_INVALID) 
                     Globals::triads.push_back(newTriad);
+            }
+            // cerr << "triads size: " << Globals::triads.size() << endl;
+            if (Globals::triads.empty()) {
+                Globals::triads.push_back(triad(TR_MAJOR, Globals::scaleRoot, Globals::scaleRoot, Globals::scaleRoot));
             }
             cerr << "Triads:" << endl;
             for (int i = 0; i < Globals::triads.size(); i++)
