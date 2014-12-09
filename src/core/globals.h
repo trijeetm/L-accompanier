@@ -33,6 +33,8 @@ using namespace std;
 #define DM_BASS         0
 #define DM_SNARE        1
 #define DM_HIHATS       2
+#define DM_TOMS         3
+#define DM_CYMBAL       4
 #define C_INPUT         0
 #define C_METRONOME     1
 #define C_DRUMMER       2

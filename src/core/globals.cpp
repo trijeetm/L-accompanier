@@ -34,14 +34,14 @@ int Globals::currentSynthNote = 48;
 vector< vector< unsigned char > > Globals::midiBuffer;
 int Globals::midiPlayhead = 0;
 
-bool Globals::toggleMetronome = true;
+bool Globals::toggleMetronome = false;
 int Globals::beatCounter = 0;
 
 int Globals::notesPlayed = 0;
 float Globals::noteIntensity = 0;
 
 vector<int> Globals::drumGfx;
-const int Globals::nDrumTypes = 3;
+const int Globals::nDrumTypes = 5;
 
 bool Globals::toggleScaleBuild = true;
 vector< vector< unsigned char > > Globals::scaleBuffer;

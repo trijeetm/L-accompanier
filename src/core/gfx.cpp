@@ -42,6 +42,56 @@ long g_last_height = g_height;
 // global variables
 GLboolean g_fullscreen = FALSE;
 
+class cubeHistoryGfx {
+public:
+    cubeHistoryGfx(int nStates, float zIncFactor, float yIncFactor, float _xOffset, float _yOffset, Vector3D col, BKSim * sim) {
+        maxStates = nStates;
+        nextCubeToUse = 0;
+        zInc = zIncFactor;
+        yInc = yIncFactor;
+        yOffset = _yOffset;
+
+        for (int i = 0; i < maxStates; i++) {
+            YCube *cube = new YCube();
+            cube->active = false;
+            cube->col = col;
+            cube->sca.setAll(1);
+            cube->loc.set(_xOffset, yOffset, 0);
+            cubes.push_back(cube);
+            sim->root().addChild(cube);
+        }
+    }
+
+    void update() {
+        for (int i = 0; i < maxStates; i++) {
+            YCube *cube = cubes[i];
+            cube->loc.z += zInc;
+            cube->loc.y += yInc;
+            if (cube->sca.x >= 0.005)
+                cube->sca.setAll(cube->sca.x - 0.005);
+        }
+    }
+
+    void addNewAndUpdate() {
+        YCube *newCube = cubes[nextCubeToUse];
+        newCube->active = true;
+        newCube->loc.z = 0;
+        newCube->loc.y = yOffset;
+        newCube->sca.setAll(1);
+        update();
+        nextCubeToUse = (nextCubeToUse + 1) % maxStates;
+    }
+
+    ~cubeHistoryGfx();
+
+    int maxStates;
+    int nextCubeToUse;
+    vector<YCube *> cubes;
+    float zInc;
+    float yInc;
+    float yOffset;
+};
+
 // gfx globals 
 YText *g_tempo;
 YCubeOutline *g_metronomeOutline;
@@ -51,6 +101,7 @@ YCubeOutline *g_intensitySliderOutline;
 YCube *g_intensitySliderMarker;
 vector<YCube *> g_bassNotes;
 vector<YCubeOutline *> g_bassNotesOutlines;
+vector<cubeHistoryGfx *> g_drumsHistory;
 
 // color scheme
 Vector3D cream(1.0, 0.964, 0.898);
@@ -138,195 +189,6 @@ void initGfx() {
 
 }
 
-// // drum gfx init func
-// void initDrumGfx() {
-//     g_drumGfx = new YEntity();
-//     // drum gfx
-//     // grid outline
-//     float yOffset = 2.25;
-//     g_tutorial = new YEntity();
-//     for (int i = 0; i < DM_N_GRID_ELEMENTS; i++) {
-//         YCubeOutline *gridOutline = new YCubeOutline();
-//         gridOutline->sca.setAll(1.0);
-//         gridCoords[i].set(1.5 * ((i % (DM_N_GRID_ELEMENTS / 4)) + 0.5 - (DM_N_GRID_ELEMENTS / 8)), 
-//             yOffset, 
-//             0);
-//         gridOutline->loc = gridCoords[i];
-//         gridOutline->outlineColor = lGray;
-//         gridOutline->lineWidth = 1.0;
-//         g_drumGfx->addChild(gridOutline);
-//         if (((i + 1) % (DM_N_GRID_ELEMENTS / 4)) == 0)
-//             yOffset -= 1.5;
-//         YText *helper = new YText();
-//         helper->setCenterLocation(Vector3D(gridCoords[i].x + 0.45, gridCoords[i].y, gridCoords[i].z));
-//         helper->col = lGray;
-//         helper->setStretch(2);
-//         switch (i) {
-//             case 0:
-//                 helper->set("1");
-//             break;
-//             case 1:
-//                 helper->set("2");
-//             break;
-//             case 2:
-//                 helper->set("3");
-//             break;
-//             case 3:
-//                 helper->set("4");
-//             break;
-//             case 4:
-//                 helper->set("q");
-//             break;
-//             case 5:
-//                 helper->set("w");
-//             break;
-//             case 6:
-//                 helper->set("e");
-//             break;
-//             case 7:
-//                 helper->set("r");
-//             break;
-//             case 8:
-//                 helper->set("a");
-//             break;
-//             case 9:
-//                 helper->set("s");
-//             break;
-//             case 10:
-//                 helper->set("d");
-//             break;
-//             case 11:
-//                 helper->set("f");
-//             break;
-//             case 12:
-//                 helper->set("z");
-//             break;
-//             case 13:
-//                 helper->set("x");
-//             break;
-//             case 14:
-//                 helper->set("c");
-//             break;
-//             case 15:
-//                 helper->set("v");
-//             break;
-//         }
-//         g_tutorial->addChild(helper);
-//         keyOffLabels.push_back(helper);
-//     }
-//     g_drumGfx->addChild(g_tutorial);
-
-//     // init playhead and trials
-//     g_playhead = new YCubeOutline();
-//     g_playhead->sca.setAll(1.1);
-//     g_playhead->loc = gridCoords[Globals::playhead];
-//     g_playhead->outlineColor = blue;
-//     g_playhead->lineWidth = 5;
-//     g_drumGfx->addChild(g_playhead);  
-
-//     g_playheadTrail1 = new YCubeOutline();
-//     g_playheadTrail1->sca.setAll(1.05);
-//     g_playheadTrail1->loc = gridCoords[Globals::playhead];
-//     g_playheadTrail1->outlineColor = blue;
-//     g_playheadTrail1->lineWidth = 3;
-//     g_drumGfx->addChild(g_playheadTrail1);  
-
-//     // g_playheadTrail2 = new YCubeOutline();
-//     // g_playheadTrail2->sca.setAll(1.01);
-//     // g_playheadTrail2->loc = gridCoords[Globals::playhead];
-//     // g_playheadTrail2->outlineColor = blue;
-//     // g_playheadTrail2->lineWidth = 1;
-//     // g_drumGfx->addChild(g_playheadTrail2);   
-
-//     // init patch events
-//     g_allPatchEvents = new YEntity();
-//     for (int i = 0; i < DM_N_GRID_ELEMENTS; i++) {
-//         for (int j = 0; j < DM_POLYPHONY; j++) {
-//             YCube *cube = new YCube();
-//             cube->sca.set(1.0, 1.0 / DM_POLYPHONY, 1);
-//             cube->loc.set(gridCoords[i][0], 
-//                 gridCoords[i][1] - 0.5 + (1.0 / (2 * DM_POLYPHONY)) + (j * (1.0 / (1 * DM_POLYPHONY))), 
-//                 gridCoords[i][2]);
-//             cube->col = patchColors[Globals::drumGrid[i].notes[j].patch];
-//             cube->active = false;
-//             g_patchCubes.push_back(cube);
-//             g_allPatchEvents->addChild(cube);
-//         }
-//     }
-//     g_drumGfx->addChild(g_allPatchEvents);
-
-//     // init patches selector
-//     g_allPatches = new YEntity();
-//     g_drumLabels = new YEntity();
-//     for (int i = 0; i < DM_POLYPHONY; i++) {
-//         YCube *cube = new YCube();
-//         cube->sca.set(1.0, 0.3, 1);
-//         cube->loc.set(((i - (DM_POLYPHONY / 2)) * 1.2) + 0.6, 
-//             3.5, 
-//             0);
-//         cube->col = patchColors[i];
-//         g_patches.push_back(cube);
-//         g_allPatches->addChild(cube);
-//         // patch selector
-//         YCubeOutline *cubeOutline = new YCubeOutline();
-//         cubeOutline->active = false;
-//         cubeOutline->sca.set(1.05, 0.35, 1.05);
-//         cubeOutline->lineWidth = 2;
-//         cubeOutline->loc.set(((i - (DM_POLYPHONY / 2)) * 1.2) + 0.6, 
-//             3.5, 
-//             0);
-//         cubeOutline->outlineColor = seaGray;
-//         g_patchSelector.push_back(cubeOutline);
-//         g_allPatches->addChild(cubeOutline);
-//         // patch label
-//         YText *label = new YText();
-//         switch (i) {
-//             case 0:
-//                 label->set("Bass 1 ( , )");
-//             break;
-//             case 1:
-//                 label->set("Bass 2 ( . )");
-//             break;
-//             case 2:
-//                 label->set("Snare 1 ( L )");
-//             break;
-//             case 3:
-//                 label->set("Snare 2 ( ; )");
-//             break;
-//             case 4:
-//                 label->set("Mid toms ( p )");
-//             break;
-//             case 5:
-//                 label->set("High toms ( [ )");
-//             break;
-//             case 6:
-//                 label->set("Hi Hat ( - )");
-//             break;
-//             case 7:
-//                 label->set("Cymbal ( + )");
-//             break;
-//         }
-//         label->col = seaGray;
-//         Vector3D labelLoc(((i - (DM_POLYPHONY / 2)) * 1.2) + 0.6, 
-//             3.75, 
-//             0);
-//         label->setCenterLocation(labelLoc);
-//         g_drumLabels->addChild(label);
-//     }
-//     g_drumGfx->addChild(g_allPatches);
-//     g_drumGfx->addChild(g_drumLabels);
-
-//     YText *instrument = new YText();
-//     instrument->col = seaGray;
-//     instrument->set("Drums");
-//     instrument->setStretch(3);
-//     instrument->setCenterLocation(Vector3D(0, -3.25, 0));
-//     g_drumGfx->addChild(instrument);
-
-//     // add drum gfx to root
-//     Globals::sim->root().addChild(g_drumGfx);
-// }
-
 void initMetronome() {
     g_metronomeOutline = new YCubeOutline();
     g_metronomeOutline->col = lGray;
@@ -359,17 +221,22 @@ void initTempoDisplay() {
 }
 
 void initDrumGfx() {
-    // for (int j = 0; j < MAX_DRUMCUBES_ROWS; j++)
-        for (int i = 0; i < Globals::nDrumTypes; i++) {
-            g_drumCubes[0].push_back(new YCube());
-            YCube *currCube = g_drumCubes[0][i];
-            currCube->col = g_drumCubeColors[i];
-            currCube->loc.set((i - (Globals::nDrumTypes / 2)) * 1.2, 0, 0);
-            // currCube->active = false;
-            // if (j == 0)
-                // currCube->active = true;
-            Globals::sim->root().addChild(currCube);
-        }
+    for (int i = 0; i < Globals::nDrumTypes; i++) {
+        g_drumCubes[0].push_back(new YCube());
+        YCube *currCube = g_drumCubes[0][i];
+        currCube->col = g_drumCubeColors[i];
+        currCube->loc.set((i - (Globals::nDrumTypes / 2)) * 1.2, -1, 0);
+        Globals::sim->root().addChild(currCube);
+
+        cubeHistoryGfx *drumHistory = new cubeHistoryGfx(60, -1.25, 0.02, (i - (Globals::nDrumTypes / 2)) * 1.2, -1, g_drumCubeColors[i], Globals::sim);
+        g_drumsHistory.push_back(drumHistory);
+    }
+
+    YText *drums = new YText();
+    drums->set("Drums");
+    drums->col = cream;
+    drums->setCenterLocation(Vector3D(0, -1.8, 0));
+    Globals::sim->root().addChild(drums);
 }
 
 void initIntensitySlider() {
@@ -401,20 +268,20 @@ void initBassGfx() {
         YCube *bassNote = new YCube();
         bassNote->col = blue;
         bassNote->sca.set(0.5, 0.2, 0.2);
-        bassNote->loc.set(-((12 / 2) * 0.75) + (i * 0.75) + (0.75 / 2), -2, 0);
+        bassNote->loc.set(-((12 / 2) * 0.75) + (i * 0.75) + (0.75 / 2), -2.5, 0);
         g_bassNotes.push_back(bassNote);
         Globals::sim->root().addChild(bassNote);
 
         YCubeOutline *bassNoteOutline = new YCubeOutline();
         bassNoteOutline->col = blue;
         bassNoteOutline->sca.set(0.52, 0.22, 0.2);
-        bassNoteOutline->loc.set(-((12 / 2) * 0.75) + (i * 0.75) + (0.75 / 2), -2, 0);
+        bassNoteOutline->loc.set(-((12 / 2) * 0.75) + (i * 0.75) + (0.75 / 2), -2.5, 0);
         bassNoteOutline->active = false;
         g_bassNotesOutlines.push_back(bassNoteOutline);
         Globals::sim->root().addChild(bassNoteOutline);
         YText *noteLabel = new YText();
         noteLabel->col = cream;
-        noteLabel->setCenterLocation(Vector3D(-((12 / 2) * 0.75) + (i * 0.75) + (0.75 + 0.075), -2.05, 0.5));
+        noteLabel->setCenterLocation(Vector3D(-((12 / 2) * 0.75) + (i * 0.75) + (0.75 + 0.075), -2.55, 0.5));
         switch (i) {
             case 0:
                 noteLabel->set("C");
@@ -455,6 +322,11 @@ void initBassGfx() {
         }
         Globals::sim->root().addChild(noteLabel);
     }
+    YText *bass = new YText();
+    bass->set("Bass");
+    bass->col = cream;
+    bass->setCenterLocation(Vector3D(0, -2.9, 0));
+    Globals::sim->root().addChild(bass);
 }
 
 //------------------------------------------------------------------
@@ -769,14 +641,17 @@ void displayFunc( )
     else 
         g_metronome->active = false;
 
-    // drums trigger
+    // drums update
     for (int i = 0; i < Globals::nDrumTypes; i++) {
         YCube *currCube = g_drumCubes[0][i];
         if (Globals::drumGfx[i] == 1) {
             currCube->sca.set(1, 1.25, 1);
+            g_drumsHistory[i]->addNewAndUpdate();
         }
-        else
+        else {
             currCube->sca.set(1, 1, 1);
+            g_drumsHistory[i]->update();
+        }
     }
 
     // intensity update
