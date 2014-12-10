@@ -52,6 +52,9 @@ void calculateNoteIntensity() {
     // old implementation
     if (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit * INTENSITY_SAMPLING_RATE) == 0) {
         Globals::noteIntensity = Globals::notesPlayed * 1.0 / (Globals::tSign.beatCount * Globals::tSign.beatUnit * INTENSITY_SAMPLING_RATE);
+        // / clamp it
+        if (Globals::noteIntensity > 3.5)
+            Globals::noteIntensity = 3.5;
         // cerr << endl << Globals::noteIntensity;
         Globals::notesPlayed = 0;
     } 
@@ -101,7 +104,7 @@ void drumRoll() {
         g_drumRollBeats = 0;
     }
 
-    cerr << "drum roll!" << endl;
+    // cerr << "drum roll!" << endl;
     int bassHeuristic, TSHueristic;
 
     float intensityFactor = INTENSITY_FACTOR;
@@ -166,7 +169,7 @@ void drummer() {
 
     g_intensitySlew.goal = Globals::noteIntensity;
     g_intensitySlew.interp2(INTENSITY_SLEW);
-    cerr << "Intensity: " << g_intensitySlew.value << endl;
+    // cerr << "Intensity: " << g_intensitySlew.value << endl;
 
     // bass drum 1 - 35
     // bass drum 2 - 36
@@ -205,32 +208,41 @@ void drummer() {
 
     // cymbals
     if (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit * 2) == 0) {
-        if (g_intensitySlew.value > intensityFactor * 2) {
-            cerr << "cymbals!" << endl;
-            g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(75, 85) * drumGain);
-            Globals::drumGfx[DM_CYMBAL] = 1;
-        }
-        if (g_intensitySlew.value > intensityFactor * 4) {
-            cerr << "cymbals!!" << endl;
-            g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(80, 95) * drumGain);
-            Globals::drumGfx[DM_CYMBAL] = 1;
-        }
-        if (g_intensitySlew.value > intensityFactor * 6) {
-            cerr << "cymbals!!!" << endl;
-            g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(95, 115) * drumGain);
-            Globals::drumGfx[DM_CYMBAL] = 1;
+        if (randInt(0, 10) > 3) {   
+            if (g_intensitySlew.value > intensityFactor * 2) {
+                // cerr << "cymbals!" << endl;
+                g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(65, 85) * drumGain);
+                Globals::drumGfx[DM_CYMBAL] = 1;
+            }
+            if (g_intensitySlew.value > intensityFactor * 4) {
+                // cerr << "cymbals!!" << endl;
+                g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(75, 90) * drumGain);
+                Globals::drumGfx[DM_CYMBAL] = 1;
+            }
+            if (g_intensitySlew.value > intensityFactor * 6) {
+                // cerr << "cymbals!!!" << endl;
+                g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(85, 105) * drumGain);
+                Globals::drumGfx[DM_CYMBAL] = 1;
+            }
         }
     }
     if (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit) == 0) {
-        if (g_intensitySlew.value > intensityFactor * 4) {
-            cerr << "cymbals!!" << endl;
-            g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(70, 90) * drumGain);
-            Globals::drumGfx[DM_CYMBAL] = 1;
-        }
-        if (g_intensitySlew.value > intensityFactor * 6) {
-            cerr << "cymbals!!!" << endl;
-            g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(75, 95) * drumGain);
-            Globals::drumGfx[DM_CYMBAL] = 1;
+        if (randInt(0, 10) > 6) {
+            if (g_intensitySlew.value > intensityFactor * 4) {
+                // cerr << "cymbals!!" << endl;
+                g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(55, 80) * drumGain);
+                Globals::drumGfx[DM_CYMBAL] = 1;
+            }
+            if (g_intensitySlew.value > intensityFactor * 6) {
+                // cerr << "cymbals!!!" << endl;
+                g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(65, 95) * drumGain);
+                Globals::drumGfx[DM_CYMBAL] = 1;
+            }
+            if (g_intensitySlew.value > intensityFactor * 12) {
+                // cerr << "cymbals!!!" << endl;
+                g_synth->noteOn(C_DRUMMER, chooseRandomSample(cymbals, nCymbals), randInt(80, 105) * drumGain);
+                Globals::drumGfx[DM_CYMBAL] = 1;
+            }
         }
     }
 
@@ -282,7 +294,7 @@ void drummer() {
         }
     }
 
-    if (g_intensitySlew.value >= intensityFactor * 3) {
+    if (g_intensitySlew.value >= intensityFactor * 4) {
         // hi hats all beats
         // cerr << "hi hats all beats" << endl;
         if (Globals::beatCounter % Globals::tSign.beatUnit == 0) {
@@ -291,7 +303,7 @@ void drummer() {
         }
     }
 
-    if (g_intensitySlew.value >= intensityFactor * 4) {
+    if (g_intensitySlew.value >= intensityFactor * 4.75) {
         // bass at downbeats
         // cerr << "bass at downbeats" << endl;
         if (Globals::beatCounter % ((Globals::tSign.beatCount * Globals::tSign.beatUnit) / 2) == 0) {
@@ -300,7 +312,7 @@ void drummer() {
         }
     }
 
-    if (g_intensitySlew.value >= intensityFactor * 4.5) {
+    if (g_intensitySlew.value >= intensityFactor * 5.5) {
         // snare and bass2 at some upbeats
         // cerr << "snare and bass2 at some upbeats" << endl;
         if ( 
@@ -319,7 +331,7 @@ void drummer() {
         }
     }
 
-    if (g_intensitySlew.value >= intensityFactor * 6) {
+    if (g_intensitySlew.value >= intensityFactor * 7) {
         // snare and bass2 at some more upbeats
         // cerr << "snare and bass2 at some more upbeats" << endl;
         if ( 
@@ -358,6 +370,38 @@ void drummer() {
             g_synth->noteOn(C_DRUMMER, chooseRandomSample(hiHats, nHiHats), randInt(45, randInt(70, 95)) * drumGain);
             // disabled for gfx sanity
             // Globals::drumGfx[DM_HIHATS] = 1;
+        }
+    } 
+
+    if (g_intensitySlew.value >= intensityFactor * 16) {
+        // rand hi hat at every beat event
+        // cerr << "rand hi hat at every beat event" << endl;
+        if ((Globals::beatCounter % 1) == 0) {
+            g_synth->noteOn(C_DRUMMER, chooseRandomSample(hiHats, nHiHats), randInt(45, randInt(95, 115)) * drumGain);
+            // disabled for gfx sanity
+            // Globals::drumGfx[DM_HIHATS] = 1;
+        }
+
+        if ( 
+            (Globals::beatCounter % Globals::tSign.beatUnit == 0) && 
+            (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit) != 0) && 
+            (Globals::beatCounter % ((Globals::tSign.beatCount * Globals::tSign.beatUnit) / 2) != 0) ) {
+            if (randInt(0, 10) > 2) {
+                g_synth->noteOn(C_DRUMMER, 38, randInt(90, 110) * drumGain);
+                Globals::drumGfx[DM_BASS] = 1;
+            }
+
+            if (randInt(0, 10) > 1) {
+                g_synth->noteOn(C_DRUMMER, chooseRandomSample(snares, nSnares), randInt(90, 110) * drumGain);
+                Globals::drumGfx[DM_SNARE] = 1;
+            }
+        }
+
+        // some snare at downbeats
+        // cerr << "bass at downbeats" << endl;
+        if (Globals::beatCounter % ((Globals::tSign.beatCount * Globals::tSign.beatUnit) / 2) == 0) {
+            g_synth->noteOn(C_DRUMMER, chooseRandomSample(snares, nSnares), randInt(75, 90) * drumGain);
+            Globals::drumGfx[DM_SNARE] = 1;
         }
     } 
 }
@@ -400,6 +444,11 @@ void bassist() {
             parentTriads.push_back(currTriad);
             parentTriads.push_back(currTriad);
             parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
+            parentTriads.push_back(currTriad);
         }
         if (currentNoteLowest == currTriad.third) {
             parentTriads.push_back(currTriad);
@@ -414,7 +463,7 @@ void bassist() {
     }
 
     // choose current triad
-    if (Globals::beatCounter % (Globals::tSign.beatCount * Globals::tSign.beatUnit) == 0) {
+    if (Globals::beatCounter % (Globals::tSign.beatUnit / 2) == 0) {
         // cerr << "triad: " << endl;
         if (!parentTriads.empty())
             g_currTriadInUse = parentTriads[randInt(0, parentTriads.size())];
@@ -528,9 +577,9 @@ static void audio_callback(SAMPLE * buffer, unsigned int numFrames, void * userD
             if (Globals::triads.empty()) {
                 Globals::triads.push_back(triad(TR_MAJOR, Globals::scaleRoot, Globals::scaleRoot, Globals::scaleRoot));
             }
-            cerr << "Triads:" << endl;
-            for (int i = 0; i < Globals::triads.size(); i++)
-                cerr << Globals::triads[i].type << "\t" << Globals::triads[i].first << "\t" << Globals::triads[i].third << "\t" << Globals::triads[i].fifth << "\t" << endl;
+            // cerr << "Triads:" << endl;
+            // for (int i = 0; i < Globals::triads.size(); i++)
+            //     cerr << Globals::triads[i].type << "\t" << Globals::triads[i].first << "\t" << Globals::triads[i].third << "\t" << Globals::triads[i].fifth << "\t" << endl;
         }
         // beat event
         Globals::tempoPeriod = (1.0 / (Globals::bpm * (Globals::tSign.beatUnit) / 60.0)) * DM_SRATE;
@@ -650,18 +699,18 @@ bool chooseMidiPort( RtMidiIn *rtmidi )
   }
   else {
     // temp hack to choose port 0
-    // i = 0;
+    i = 0;
 
-    for ( i=0; i<nPorts; i++ ) {
-      portName = rtmidi->getPortName(i);
-      std::cout << "  Input port #" << i << ": " << portName << '\n';
-    }
+    // for ( i=0; i<nPorts; i++ ) {
+    //   portName = rtmidi->getPortName(i);
+    //   std::cout << "  Input port #" << i << ": " << portName << '\n';
+    // }
 
-    do {
-      std::cout << "\nChoose a port number: ";
-      std::cin >> i;
-    } while ( i >= nPorts );
-    std::getline( std::cin, keyHit );  // used to clear out stdin
+    // do {
+    //   std::cout << "\nChoose a port number: ";
+    //   std::cin >> i;
+    // } while ( i >= nPorts );
+    // std::getline( std::cin, keyHit );  // used to clear out stdin
   }
 
   rtmidi->openPort( i );
@@ -682,7 +731,7 @@ void midi_callback(double deltatime, std::vector< unsigned char > *message, void
     // build scale
     if (Globals::toggleScaleBuild) {
         // cerr << "build scale mode" << endl;
-        vector< unsigned char > midi = *message;
+        // vector< unsigned char > midi = *message;
         if ((int)midi[0] == 144) {
             if (Globals::scaleRoot == -1)
                 Globals::scaleRoot = (int)midi[1] % 12;
@@ -693,7 +742,7 @@ void midi_callback(double deltatime, std::vector< unsigned char > *message, void
     // push to midi buffer
     else {
         // cerr << "live midi" << endl;
-        vector< unsigned char > midi = *message;
+        // vector< unsigned char > midi = *message;
         // system dependant correction?
         midi[0] = (int)midi[0];
         Globals::midiBuffer.push_back(midi);

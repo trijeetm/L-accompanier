@@ -30,14 +30,6 @@ int main( int argc, char ** argv ) {
             Globals::midiMode = MIDI_THRU;
     }
     
-    // invoke graphics setup and loop
-    if( !gfx_init( argc, argv ) )
-    {
-        // error message
-        cerr << "[accompanier]: cannot initialize graphics/data system..." << endl;
-        return -1;
-    }
-
     cerr << "BPM = " << Globals::bpm << endl;
     cerr << "Time Signature " << Globals::tSign.beatCount << "/" << Globals::tSign.beatUnit << endl;
     // start real-time audio
@@ -45,6 +37,14 @@ int main( int argc, char ** argv ) {
     {
         // error message
         cerr << "[accompanier]: cannot initialize real-time audio I/O..." << endl;
+        return -1;
+    }
+
+    // invoke graphics setup and loop
+    if( !gfx_init( argc, argv ) )
+    {
+        // error message
+        cerr << "[accompanier]: cannot initialize graphics/data system..." << endl;
         return -1;
     }
 

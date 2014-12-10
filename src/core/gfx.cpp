@@ -109,18 +109,18 @@ Vector3D seaGray(0.243, 0.27, 0.298);
 Vector3D lGray(0.878, 0.872, 0.867);
 Vector3D warmRed(1.0, 0.498, 0.4);
 Vector3D blue(0.494, 0.807, 0.992);
-Vector3D dBlue(33.0f / 255, 133.0f / 255, 215.0f / 255);
-Vector3D ourWhite( 1, 1, 1 );
-Vector3D ourRed( 1, .5, .5 );
+Vector3D dBlue(.0f / 255, .0f / 255, 45.0f / 255);
+// Vector3D ourWhite( 1, 1, 1 );
+Vector3D dGray( 0.07, 0.05, 0.05 );
 Vector3D ourBlue( 102.0f/255, 204.0f/255, 1.0f );
-Vector3D ourOrange( 1, .75, .25 );
-Vector3D ourGreen( .7, 1, .45 );
-Vector3D ourGray( .4, .4, .4 );
-Vector3D ourYellow( 1, 1, .25 );
-Vector3D ourSoftYellow( .7, .7, .1 );
+// Vector3D ourOrange( 1, .75, .25 );
+// Vector3D ourGreen( .7, 1, .45 );
+// Vector3D ourGray( .4, .4, .4 );
+// Vector3D ourYellow( 1, 1, .25 );
+// Vector3D ourSoftYellow( .7, .7, .1 );
 Vector3D ourPurple( .6, .25, .6 );
 
-Vector3D g_drumCubeColors[3] = {cream, warmRed, blue};
+Vector3D g_drumCubeColors[5] = {cream, warmRed, blue, dBlue, dGray};
 
 //-----------------------------------------------------------------------------
 // name: gfx_init()
@@ -218,6 +218,11 @@ void initTempoDisplay() {
     tempoDown->col = cream;
     tempoDown->set("<arrow-up> inc. tempo by 1");
     Globals::sim->root().addChild(tempoDown);
+    YText *scaleInfo = new YText();
+    scaleInfo->setCenterLocation(Vector3D(-0.7, -4.2, 0));
+    scaleInfo->col = cream;
+    scaleInfo->set("Press 's' to toggle scale build mode");
+    Globals::sim->root().addChild(scaleInfo);
 }
 
 void initDrumGfx() {
@@ -430,23 +435,16 @@ void help()
     cerr << "L'accompanier" << endl;
     cerr << "Trijeet Mukhopadhyay" << endl;
     cerr << "http://ccrma.stanford.edu/~trijeetm/l-accompanier" << endl;
-    // cerr << "------------------------------------------------------------------------" << endl;
-    // cerr << "'h' - print this help message" << endl;
-    // cerr << "'`' - toggle fullscreen (below esc key)" << endl;
-    // cerr << "'<esc>' - quit visualization" << endl;
-    // cerr << "'<tab>' - switch instruments" << endl;
-    // cerr << "left and right arrows to cycle b/w patches/notes" << endl;
-    // cerr << "or use the following keys to select notes/patches" << endl;
-    // cerr << "\t'-'\t'='\t" << endl;
-    // cerr << "\t'p'\t'['\t" << endl;
-    // cerr << "\t'l'\t';'\t" << endl;
-    // cerr << "\t','\t'.'\t" << endl;
-    // cerr << "and place them on the sequencer" << endl;
-    // cerr << "keys correspond to position in the grid, hitting those toggles notes in that position" << endl;
-    // cerr << "'<spacebar>' to clear all notes" << endl;
-    // cerr << "<up-arrow> and <down-arrow> to control tempo" << endl;
-    // cerr << "------------------------------------------------------------------------" << endl;
-    // cerr << "PROTIP: if program crashes, run with wi-fi/bluetooth turned off" << endl;
+    cerr << "------------------------------------------------------------------------" << endl;
+    cerr << "'h' - print this help message" << endl;
+    cerr << "'`' - toggle fullscreen (below esc key)" << endl;
+    cerr << "'<esc>' - quit visualization" << endl;
+    cerr << "'.' and '/' - control drums gain" << endl;
+    cerr << "';' and '\'' - control bass gain" << endl;
+    cerr << "'s' - toggle scale building mode" << endl;
+    cerr << "<up-arrow> and <down-arrow> to control tempo" << endl;
+    cerr << "------------------------------------------------------------------------" << endl;
+    cerr << "PROTIP: if program crashes, run with wi-fi/bluetooth turned off" << endl;
     cerr << "------------------------------------------------------------------------" << endl;
 }
 
@@ -509,13 +507,13 @@ void keyboardFunc( unsigned char key, int x, int y )
         case 's': // toggle scale build
             Globals::toggleScaleBuild = !Globals::toggleScaleBuild;
             if (!Globals::toggleScaleBuild) {
-                cerr << endl << endl;
-                cerr << "Scale:" << endl;
-                for (int i = 0; i < 12; i++) {
-                    cerr << Globals::scaleMap[i] << "\t";
-                }
-                cerr << endl;
-                cerr << "Root:" << Globals::scaleRoot << endl;
+                // cerr << endl << endl;
+                // cerr << "Scale:" << endl;
+                // for (int i = 0; i < 12; i++) {
+                //     cerr << Globals::scaleMap[i] << "\t";
+                // }
+                // cerr << endl;
+                // cerr << "Root:" << Globals::scaleRoot << endl;
             }
             if (Globals::toggleScaleBuild) {
                 // reset scale
@@ -655,7 +653,7 @@ void displayFunc( )
     }
 
     // intensity update
-    g_sliderOffset.goal = Globals::noteIntensity;
+    g_sliderOffset.goal = ((Globals::noteIntensity / 3.5) * 3.5);
     g_sliderOffset.interp2(0.15);
     g_intensitySliderMarker->loc.set(0 - (3.5 / 2) + (0.35 / 2) + g_sliderOffset.value, 3.5, 0);
 
@@ -678,8 +676,8 @@ void displayFunc( )
         // current note highlighter
         if (i == Globals::currentBassNote) {
             g_bassNotes[i]->col = ourPurple;
-            g_bassNotes[i]->sca.set(0.6, 0.3, 0.2);
-            g_bassNotesOutlines[i]->sca.set(0.62, 0.32, 0.2);
+            g_bassNotes[i]->sca.set(0.75, 0.32, 0.2);
+            g_bassNotesOutlines[i]->sca.set(0.77, 0.34, 0.2);
             // bassNote->sca.set(0.5, 0.2, 0.2);
         }
     }
